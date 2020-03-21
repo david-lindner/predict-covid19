@@ -8,7 +8,7 @@ function updateVariables(contacts_per_person_per_day, infection_rate_per_contact
       contacts_per_person_per_day = household + (contacts_per_person_per_day - household) * 0.5;
    }
    if (handwashing) {
-      infection_rate_per_contact = infection_rate_per_contact * 0.84 * 0.75 + infection_rate_per_contact * 0.25;
+      infection_rate_per_contact = infection_rate_per_contact * 0.84 * 0.9 + infection_rate_per_contact * 0.1;
    }
    if (schools_closed) {
       contacts_per_person_per_day = (1 - student_ratio) * contacts_per_person_per_day + student_ratio * contacts_per_person_per_day * 0.5;
@@ -20,7 +20,7 @@ function updateVariables(contacts_per_person_per_day, infection_rate_per_contact
       contacts_per_person_per_day = contacts_per_person_per_day * 0.1 + household * 0.9;
    }
    if (masks) {
-      infection_rate_per_contact = infection_rate_per_contact * 0.32 * 0.75 + infection_rate_per_contact * 0.25;
+      infection_rate_per_contact = infection_rate_per_contact * 0.32 * 0.5 + infection_rate_per_contact * 0.5;
    }
 
    return [contacts_per_person_per_day, infection_rate_per_contact];
