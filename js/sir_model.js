@@ -1,9 +1,7 @@
 var odex = require("./odex");
 
-function sirModel (population_size, contacts_per_person_per_day, infection_rate_per_contact,
-                    days_infectious, infected_today, infected_two_weeks_ago, timehorizon) {
-   var initially_infected = infected_today - infected_two_weeks_ago;
-   var initially_recovered = infected_two_weeks_ago;
+function sirModel (contacts_per_person_per_day, infection_rate_per_contact, days_infectious,
+                   population_size, initially_infected, initially_recovered, timehorizon) {
    var initially_susceptible = population_size - initially_infected - initially_recovered;
 
    var beta = infection_rate_per_contact * contacts_per_person_per_day;

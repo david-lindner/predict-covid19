@@ -4,9 +4,11 @@
 <head>
    <meta charset="UTF-8">
    <title>Untitled</title>
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0" type="text/javascript"></script>
    <script src="js/utils.js" type="text/javascript"></script>
    <script src="js/bundle/sir_model.js" type="text/javascript"></script>
+   <script src="js/papaparse.min.js" type="text/javascript"></script>
    <style>
       canvas {
          -moz-user-select: none;
@@ -77,16 +79,48 @@
       <canvas id="canvas" style="display: block; width: 723px; height: 361px;" width="1446" height="722" class="chartjs-render-monitor"></canvas>
    </div>
    <script>
+      var johnHopkinsConfirmed;
+
+      $.ajax({
+         type: "GET",
+         url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv",
+         dataType: "text",
+         success: function(data) {
+            var results = Papa.parse(data);
+            johnHopkinsConfirmed = results.data;
+         },
+         async: false  // need to be synchronous because data is required
+      });
+
+      function strcmp(a, b) {
+          if (a.toString() < b.toString()) return -1;
+          if (a.toString() > b.toString()) return 1;
+          return 0;
+      }
+
+      function extractCountryTimeSeries(data, country) {
+         var i;
+         for (i=1; i < data.length; i++) {
+            if (strcmp(data[i][1], country) == 0) {
+               return data[i].slice(4);
+            }
+         }
+         throw "Country not found in data!";
+      }
+
+      var past_ts = extractCountryTimeSeries(johnHopkinsConfirmed, "Germany");
+
       var population_size = 83042200;
       var contacts_per_person_per_day = 8;
       var infection_rate_per_contact = 0.06;
       var days_infectious = 5;
-      var infected_today = 15160;
-      var infected_two_weeks_ago = 653;
+      var initially_infected = 15160;
+      var initially_recovered = 180;
       var timehorizon = 150;
 
-      var result = sirModel(population_size, contacts_per_person_per_day, infection_rate_per_contact,
-                            days_infectious, infected_today, infected_two_weeks_ago, timehorizon);
+      var result = sirModel(contacts_per_person_per_day, infection_rate_per_contact,
+         days_infectious, population_size, initially_infected,
+         initially_recovered, timehorizon);
 
       var config = {
          type: 'line',
