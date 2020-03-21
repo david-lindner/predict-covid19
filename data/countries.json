@@ -1,0 +1,50 @@
+[{
+		"country": "Germany",
+		"attributes": {
+			"population_size": 83019213,
+			"students": 10906300,
+			"average_household": 2.0,
+			"seniors": 17880000,
+			"hospital_capacity": 640000
+		}
+	}, {
+		"country": "Switzerland",
+		"attributes": {
+			"population_size": 8544527,
+			"students": 1317801,
+			"average_household": 2.25,
+			"seniors": 1493761,
+			"hospital_capacity": 38679
+		}
+	},
+	{
+		"country": "Italy",
+		"attributes": {
+			"population_size": 60550075,
+			"students": 7153052,
+			"average_household": 2.58,
+			"seniors": 13139133,
+			"hospital_capacity": 192609
+		}
+	},
+	{
+		"country": "China",
+		"attributes": {
+			"population_size": 1427647786,
+			"students": 185948718,
+			"average_household": 3.03,
+			"seniors": 158310000,
+			"hospital_capacity": 6195987
+		}
+	},
+	{
+		"country": "Austria",
+		"attributes": {
+			"population_size": 8858775,
+			"students": 1110813,
+			"average_household": 2.22,
+			"seniors": 1683167,
+			"hospital_capacity": 65189
+		}
+	}
+]
