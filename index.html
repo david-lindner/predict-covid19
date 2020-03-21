@@ -10,6 +10,8 @@
    <script src="js/bundle/sir_model.js" type="text/javascript"></script>
    <script src="js/papaparse.min.js" type="text/javascript"></script>
    <script src="js/chartjs-plugin-annotation.min.js" type="text/javascript"></script>
+   <script src="js/moment.min.js" type="text/javascript"></script>
+
    <script src="js/controls.js" type="text/javascript"></script>
    <style>
       canvas {
@@ -128,6 +130,8 @@
       var contacts_per_person_per_day = 8;
       var infection_rate_per_contact = 0.06;
       var days_infectious = 5;
+
+      var n_hospital_beds = 497180;
       var seniors = 17880000;
       var students = 10906300;
       var household = 2;
@@ -136,7 +140,7 @@
       var initially_recovered = parseInt(past_recovered[past_recovered.length - 1]);
 
       var t_past = 20;
-      var t_future = 300;
+      var t_future = 100;
 
       function runScenario(social_distancing, handwashing, schools_closed, risk_groups_isolated, quarantine, masks) {
          new_params = updateVariables(contacts_per_person_per_day, infection_rate_per_contact,
@@ -158,10 +162,24 @@
       past_empty.push(initially_infected);
       var future_empty = new Array(t_future);
 
+      function newDate(days) {
+         return moment().add(days, 'd').format("MM/DD");
+      }
+
+      var timeaxis = [];
+      var i;
+      for (i = t_past; i > 0; i--) {
+         timeaxis.push(newDate(-i));
+      }
+      for (i = 0; i < t_future; i++) {
+         timeaxis.push(newDate(i));
+      }
+      console.log(timeaxis);
+
       var config = {
          type: 'line',
          data: {
-            labels: [...Array(t_past + t_future).keys()],
+            labels: timeaxis,
             datasets: [{
                   label: 'Base',
                   fill: false,
@@ -170,28 +188,28 @@
                   borderDash: [5, 5],
                   data: past_empty.concat(base_pred.slice(0, t_future)),
                }, {
-                  label: 'BaseFut',
+                  label: 'Base Scenario',
                   backgroundColor: window.chartColors.orange,
                   borderColor: window.chartColors.orange,
                   data: past_confirmed.slice(past_confirmed.length - t_past).concat(future_empty),
                   fill: true,
                },
                {
-                  label: 'Scen1Fut',
+                  label: 'Scenario 1',
                   backgroundColor: window.chartColors.blue,
                   borderColor: window.chartColors.blue,
                   borderDash: [5, 5],
                   fill: false,
                   data: past_empty.concat(scen1_pred.slice(0, t_future))
                }, {
-                  label: 'Scen2Fut',
+                  label: 'Scenario 2',
                   backgroundColor: window.chartColors.green,
                   borderColor: window.chartColors.green,
                   borderDash: [5, 5],
                   fill: false,
                   data: past_empty.concat(scen2_pred.slice(0, t_future))
                }, {
-                  label: 'Scen3Fut',
+                  label: 'Scenario 3',
                   backgroundColor: window.chartColors.red,
                   borderColor: window.chartColors.red,
                   borderDash: [5, 5],
@@ -212,7 +230,7 @@
             },
             legend: {
                //onClick: function(e) {
-                  //e.stopPropagation();
+               //e.stopPropagation();
                //}
             },
             hover: {
@@ -224,31 +242,38 @@
                   display: true,
                   scaleLabel: {
                      display: true,
-                     labelString: 'Month'
-                  }
+                     labelString: 'Date'
+                  },
+                  ticks: {
+                       autoSkip: true,
+                       maxTicksLimit: 20
+                   }
                }],
                yAxes: [{
                   display: true,
                   scaleLabel: {
                      display: true,
-                     labelString: 'Value'
+                     labelString: '# infected'
+                  },
+                  ticks: {
+                     min: 0
                   }
                }]
             },
-            annotation: {
-               annotations: [{
-                  type: 'line',
-                  mode: 'horizontal',
-                  scaleID: 'y-axis-0',
-                  value: 100000,
-                  borderColor: 'rgb(255, 0, 0)',
-                  borderWidth: 4,
-                  label: {
-                     enabled: false,
-                     content: 'Test label'
-                  }
-               }]
-            }
+            // annotation: {
+            //    annotations: [{
+            //       type: 'line',
+            //       mode: 'horizontal',
+            //       scaleID: 'y-axis-0',
+            //       value: n_hospital_beds,
+            //       borderColor: 'rgb(255, 0, 0)',
+            //       borderWidth: 4,
+            //       label: {
+            //          enabled: false,
+            //          content: 'Test label'
+            //       }
+            //    }]
+            // }
          }
       };
 
