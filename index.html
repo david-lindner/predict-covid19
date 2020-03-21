@@ -9,6 +9,7 @@
    <script src="js/utils.js" type="text/javascript"></script>
    <script src="js/bundle/sir_model.js" type="text/javascript"></script>
    <script src="js/papaparse.min.js" type="text/javascript"></script>
+   <script src="js/chartjs-plugin-annotation.min.js" type="text/javascript"></script>
    <style>
       canvas {
          -moz-user-select: none;
@@ -79,7 +80,7 @@
       <canvas id="canvas" style="display: block; width: 723px; height: 361px;" width="1446" height="722" class="chartjs-render-monitor"></canvas>
    </div>
    <script>
-      var johnHopkinsConfirmed;
+      var johnHopkinsConfirmed, johnHopkinsRecovered;
 
       $.ajax({
          type: "GET",
@@ -89,18 +90,29 @@
             var results = Papa.parse(data);
             johnHopkinsConfirmed = results.data;
          },
-         async: false  // need to be synchronous because data is required
+         async: false // need to be synchronous because data is required
+      });
+
+      $.ajax({
+         type: "GET",
+         url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv",
+         dataType: "text",
+         success: function(data) {
+            var results = Papa.parse(data);
+            johnHopkinsRecovered = results.data;
+         },
+         async: false // need to be synchronous because data is required
       });
 
       function strcmp(a, b) {
-          if (a.toString() < b.toString()) return -1;
-          if (a.toString() > b.toString()) return 1;
-          return 0;
+         if (a.toString() < b.toString()) return -1;
+         if (a.toString() > b.toString()) return 1;
+         return 0;
       }
 
       function extractCountryTimeSeries(data, country) {
          var i;
-         for (i=1; i < data.length; i++) {
+         for (i = 1; i < data.length; i++) {
             if (strcmp(data[i][1], country) == 0) {
                return data[i].slice(4);
             }
@@ -108,44 +120,84 @@
          throw "Country not found in data!";
       }
 
-      var past_ts = extractCountryTimeSeries(johnHopkinsConfirmed, "Germany");
+      var past_confirmed = extractCountryTimeSeries(johnHopkinsConfirmed, "Germany");
+      var past_recovered = extractCountryTimeSeries(johnHopkinsRecovered, "Germany");
 
       var population_size = 83042200;
       var contacts_per_person_per_day = 8;
       var infection_rate_per_contact = 0.06;
       var days_infectious = 5;
-      var initially_infected = 15160;
-      var initially_recovered = 180;
-      var timehorizon = 150;
+      var initially_infected = parseInt(past_confirmed[past_confirmed.length-1]);
+      var initially_recovered = parseInt(past_recovered[past_recovered.length-1]);
+
+      var t_past = 20;
+      var t_future = 10;
 
       var result = sirModel(contacts_per_person_per_day, infection_rate_per_contact,
          days_infectious, population_size, initially_infected,
-         initially_recovered, timehorizon);
+         initially_recovered, t_future);
+      var base_pred = result[1];
+
+      result = sirModel(contacts_per_person_per_day, 0.9*infection_rate_per_contact,
+         days_infectious, population_size, initially_infected,
+         initially_recovered, t_future);
+      var scen1_pred = result[1];
+
+      result = sirModel(contacts_per_person_per_day, 0.8*infection_rate_per_contact,
+         days_infectious, population_size, initially_infected,
+         initially_recovered, t_future);
+      var scen2_pred = result[1];
+
+      result = sirModel(contacts_per_person_per_day, 0.7*infection_rate_per_contact,
+         days_infectious, population_size, initially_infected,
+         initially_recovered, t_future);
+      var scen3_pred = result[1];
+
+      var past_empty = new Array(t_past-1);
+      past_empty.push(initially_infected);
+      var future_empty = new Array(t_future);
 
       var config = {
          type: 'line',
          data: {
-            labels: [...Array(timehorizon).keys()],
+            labels: [...Array(t_past + t_future).keys()],
             datasets: [{
-               label: 'Susceptible',
-               fill: false,
-               backgroundColor: window.chartColors.blue,
-               borderColor: window.chartColors.blue,
-               data: result[0],
-            }, {
-               label: 'Infected',
-               fill: false,
-               backgroundColor: window.chartColors.green,
-               borderColor: window.chartColors.green,
-               borderDash: [5, 5],
-               data: result[1],
-            }, {
-               label: 'Recovered',
-               backgroundColor: window.chartColors.red,
-               borderColor: window.chartColors.red,
-               data: result[2],
-               fill: true,
-            }]
+                  label: 'Base',
+                  fill: false,
+                  backgroundColor: window.chartColors.orange,
+                  borderColor: window.chartColors.orange,
+                  borderDash: [5, 5],
+                  data: past_empty.concat(base_pred.slice(0, t_future)),
+               }, {
+                  label: 'BaseFut',
+                  backgroundColor: window.chartColors.orange,
+                  borderColor: window.chartColors.orange,
+                  data: past_confirmed.slice(past_confirmed.length - t_past).concat(future_empty),
+                  fill: true,
+               },
+               {
+                  label: 'Scen1Fut',
+                  backgroundColor: window.chartColors.blue,
+                  borderColor: window.chartColors.blue,
+                  borderDash: [5, 5],
+                  fill: false,
+                  data: past_empty.concat(scen1_pred.slice(0, t_future))
+               }, {
+                  label: 'Scen2Fut',
+                  backgroundColor: window.chartColors.green,
+                  borderColor: window.chartColors.green,
+                  borderDash: [5, 5],
+                  fill: false,
+                  data: past_empty.concat(scen2_pred.slice(0, t_future))
+               }, {
+                  label: 'Scen3Fut',
+                  backgroundColor: window.chartColors.red,
+                  borderColor: window.chartColors.red,
+                  borderDash: [5, 5],
+                  fill: false,
+                  data: past_empty.concat(scen3_pred.slice(0, t_future))
+               }
+            ]
          },
          options: {
             responsive: true,
@@ -156,6 +208,11 @@
             tooltips: {
                mode: 'index',
                intersect: false,
+            },
+            legend: {
+               onClick: function(e) {
+                  e.stopPropagation();
+               }
             },
             hover: {
                mode: 'nearest',
@@ -174,6 +231,20 @@
                   scaleLabel: {
                      display: true,
                      labelString: 'Value'
+                  }
+               }]
+            },
+            annotation: {
+               annotations: [{
+                  type: 'line',
+                  mode: 'horizontal',
+                  scaleID: 'y-axis-0',
+                  value: 100000,
+                  borderColor: 'rgb(255, 0, 0)',
+                  borderWidth: 4,
+                  label: {
+                     enabled: false,
+                     content: 'Test label'
                   }
                }]
             }
