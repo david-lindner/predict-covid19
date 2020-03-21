@@ -10,7 +10,9 @@
    <script src="js/bundle/sir_model.js" type="text/javascript"></script>
    <script src="js/papaparse.min.js" type="text/javascript"></script>
    <script src="js/chartjs-plugin-annotation.min.js" type="text/javascript"></script>
-   <script src="js/moment.min.js" type="text/javascript"></script>
+   <script src="js/moment-with-locales.min.js" type="text/javascript"></script>
+   <script src="js/numeral.min.js" type="text/javascript"></script>
+   <script src="js/numeral-locales.min.js" type="text/javascript"></script>
 
    <script src="js/controls.js" type="text/javascript"></script>
    <style>
@@ -162,8 +164,11 @@
       past_empty.push(initially_infected);
       var future_empty = new Array(t_future);
 
+      moment.locale("de")
+      numeral.locale("de")
+
       function newDate(days) {
-         return moment().add(days, 'd').format("MM/DD");
+         return moment().add(days, 'd').format("LL");
       }
 
       var timeaxis = [];
@@ -185,7 +190,7 @@
                   fill: false,
                   backgroundColor: window.chartColors.orange,
                   borderColor: window.chartColors.orange,
-                  borderDash: [5, 5],
+                  // borderDash: [5, 5],
                   data: past_empty.concat(base_pred.slice(0, t_future)),
                }, {
                   label: 'Base Scenario',
@@ -198,21 +203,21 @@
                   label: 'Scenario 1',
                   backgroundColor: window.chartColors.blue,
                   borderColor: window.chartColors.blue,
-                  borderDash: [5, 5],
+                  // borderDash: [5, 5],
                   fill: false,
                   data: past_empty.concat(scen1_pred.slice(0, t_future))
                }, {
                   label: 'Scenario 2',
                   backgroundColor: window.chartColors.green,
                   borderColor: window.chartColors.green,
-                  borderDash: [5, 5],
+                  // borderDash: [5, 5],
                   fill: false,
                   data: past_empty.concat(scen2_pred.slice(0, t_future))
                }, {
                   label: 'Scenario 3',
                   backgroundColor: window.chartColors.red,
                   borderColor: window.chartColors.red,
-                  borderDash: [5, 5],
+                  // borderDash: [5, 5],
                   fill: false,
                   data: past_empty.concat(scen3_pred.slice(0, t_future))
                }
@@ -227,6 +232,17 @@
             tooltips: {
                mode: 'index',
                intersect: false,
+               callbacks: {
+                  label: function(tooltipItem, data) {
+                     var label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+                     if (label) {
+                        label += ': ';
+                     }
+                     label += numeral(Math.round(tooltipItem.yLabel)).format("0.0a");
+                     return label;
+                  }
+               }
             },
             legend: {
                //onClick: function(e) {
@@ -237,6 +253,14 @@
                mode: 'nearest',
                intersect: true
             },
+            elements: {
+               point: {
+                  radius: 3
+               },
+               line: {
+                  borderWidth: 1.5
+               }
+            },
             scales: {
                xAxes: [{
                   display: true,
@@ -245,18 +269,21 @@
                      labelString: 'Date'
                   },
                   ticks: {
-                       autoSkip: true,
-                       maxTicksLimit: 20
-                   }
+                     autoSkip: true,
+                     maxTicksLimit: 20
+                  }
                }],
                yAxes: [{
                   display: true,
                   scaleLabel: {
                      display: true,
-                     labelString: '# infected'
+                     labelString: '# infected (in thousands)'
                   },
                   ticks: {
-                     min: 0
+                     min: 0,
+                     callback: function(tick, index, ticks) {
+                        return tick / 1000;
+                     }
                   }
                }]
             },
